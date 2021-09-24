@@ -6,3 +6,76 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+model UserModel {
+  userId String @id @default(uuid())
+
+  username  String
+  email String
+  phone String
+
+  methods MethodModel[]
+
+  permissionGroupId String
+  permissionGroup   PermissionGroupModel @relation(fields: [permissionGroupId], references: [permissionGroupId])
+  sessions          SessionModel[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum MethodProvider {
+  LOCAL
+}
+
+model MethodModel {
+  methodId String @id @default(uuid())
+
+  userId String
+  user   UserModel @relation(fields: [userId], references: [userId])
+
+  provider MethodProvider
+  identity String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model PermissionModel {
+  permissionId String @id
+
+  name            String
+  description     String                 @default("")
+  permissionGroup PermissionGroupModel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PermissionGroupModel {
+  permissionGroupId String @id @default(uuid())
+
+  name        String
+  description String @default("")
+
+  permissions PermissionModel[]
+  users       UserModel[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model SessionModel {
+  sessionId String @id
+
+  userId    String
+  user      UserModel @relation(fields: [userId], references: [userId])
+  userAgent String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
