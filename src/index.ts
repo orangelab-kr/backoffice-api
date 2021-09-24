@@ -3,6 +3,7 @@ import express from 'express';
 import serverless from 'serverless-http';
 import { getRouter, InternalError, LoggerMiddleware, OPCODE, Wrapper } from '.';
 
+export * from './controllers';
 export * from './middlewares';
 export * from './routes';
 export * from './tools';
@@ -21,5 +22,5 @@ app.all(
   })
 );
 
-const options = { basePath: '/' };
+const options = { basePath: '/v1' };
 export const handler = serverless(app, options);
