@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 prisma.$use(async (params, next) => {
-  const bypassSoftDeleted: string[] = [];
+  const bypassSoftDeleted: string[] = ['PermissionModel', 'ServiceModel'];
   if (params.model && !bypassSoftDeleted.includes(params.model)) {
     if (!['create', 'update', 'upsert', 'delete'].includes(params.action)) {
       if (!params.args.where) params.args.where = {};
