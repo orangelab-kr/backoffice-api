@@ -10,9 +10,9 @@ generator client {
 model UserModel {
   userId String @id @default(uuid())
 
-  username  String
-  email String
-  phone String
+  username String
+  email    String
+  phone    String
 
   methods MethodModel[]
 
@@ -46,6 +46,10 @@ model MethodModel {
 model PermissionModel {
   permissionId String @id
 
+  serviceId String
+  service   ServiceModel @relation(fields: [serviceId], references: [serviceId])
+  index     Int?
+
   name            String
   description     String                 @default("")
   permissionGroup PermissionGroupModel[]
@@ -78,4 +82,15 @@ model SessionModel {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+}
+
+model ServiceModel {
+  serviceId String @id
+
+  endpoint  String
+  secretKey String
+
+  permissions PermissionModel[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }

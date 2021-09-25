@@ -100,9 +100,10 @@ export class PermissionGroup {
   }
 
   public static async modifyPermissionGroup(
-    permissionGroupId: string,
+    permissionGroup: PermissionGroupModel,
     props: { name: string; description: string; permissionIds: string[] }
-  ): Promise<void> {
+  ): Promise<PermissionGroupModel> {
+    const { permissionGroupId } = permissionGroup;
     const schema = Joi.object({
       name: Joi.string().min(2).max(16).optional(),
       description: Joi.string().default('').allow('').max(64).optional(),
@@ -121,25 +122,17 @@ export class PermissionGroup {
       };
     }
 
-    await prisma.permissionGroupModel.update({ where, data });
+    return prisma.permissionGroupModel.update({ where, data });
   }
 
   public static async deletePermissionGroup(
-    permissionGroupId: string
+    permissionGroup: PermissionGroupModel
   ): Promise<void> {
-    const include = { users: true };
-    const where: Prisma.PermissionGroupModelWhereInput = { permissionGroupId };
-    const { findFirst, deleteMany } = prisma.permissionGroupModel;
-    const permissionGroup = await findFirst({ where, include });
+    const { permissionGroupId } = permissionGroup;
+    const users = await prisma.permissionGroupModel
+      .findFirst({ where: { permissionGroupId } })
+      .users();
 
-    if (!permissionGroup) {
-      throw new InternalError(
-        '해당 권한 그룹을 찾을 수 없습니다.',
-        OPCODE.NOT_FOUND
-      );
-    }
-
-    const { users } = permissionGroup;
     if (users.length > 0) {
       throw new InternalError(
         `해당 권한 그룹을 사용하는 사용자가 있습니다.`,
@@ -148,6 +141,8 @@ export class PermissionGroup {
       );
     }
 
-    await deleteMany({ where: { permissionGroupId } });
+    await prisma.permissionGroupModel.deleteMany({
+      where: { permissionGroupId },
+    });
   }
 }

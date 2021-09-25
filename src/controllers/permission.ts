@@ -1,4 +1,5 @@
 import { PermissionModel, Prisma } from '@prisma/client';
+import { Service } from '.';
 import { InternalError, Joi, OPCODE, prisma } from '..';
 
 export class Permission {
@@ -21,6 +22,7 @@ export class Permission {
   ): Promise<PermissionModel | null> {
     const permission = await prisma.permissionModel.findFirst({
       where: { permissionId },
+      include: { service: true },
     });
 
     return permission;
@@ -28,19 +30,22 @@ export class Permission {
 
   public static async createPermission(props: {
     permissionId: string;
+    serviceId: string;
     name: string;
     description: string;
   }): Promise<PermissionModel> {
     const schema = Joi.object({
       permissionId: Joi.string().uuid().required(),
+      serviceId: Joi.string().uuid().required(),
       name: Joi.string().min(2).max(16).required(),
       description: Joi.string().default('').allow('').max(64).optional(),
+      index: Joi.number().allow(null).optional(),
     });
 
-    const { permissionId, name, description } = await schema.validateAsync(
-      props
-    );
+    const { permissionId, name, serviceId, description, index } =
+      await schema.validateAsync(props);
 
+    await Service.getServiceOrThrow(serviceId);
     const exists = await Permission.getPermission(permissionId);
     if (exists) {
       throw new InternalError(
@@ -50,7 +55,7 @@ export class Permission {
     }
 
     const permission = await prisma.permissionModel.create({
-      data: { permissionId, name, description },
+      data: { permissionId, name, description, index, serviceId },
     });
 
     return permission;
@@ -81,16 +86,19 @@ export class Permission {
     const where: Prisma.PermissionModelWhereInput = {
       OR: [
         { permissionId: { contains: search } },
+        { serviceId: { contains: search } },
         { name: { contains: search } },
       ],
     };
 
+    const include: Prisma.PermissionModelInclude = { service: true };
     const [total, permissions] = await prisma.$transaction([
       prisma.permissionModel.count({ where }),
       prisma.permissionModel.findMany({
         take,
         skip,
         where,
+        include,
         orderBy,
       }),
     ]);
@@ -99,22 +107,40 @@ export class Permission {
   }
 
   public static async modifyPermission(
-    permissionId: string,
-    props: { name: string; description: string }
-  ): Promise<void> {
+    permission: PermissionModel,
+    props: {
+      permissionId: string;
+      serviceId: string;
+      name: string;
+      description: string;
+      index: number;
+    }
+  ): Promise<PermissionModel> {
     const schema = Joi.object({
+      permissionId: Joi.string().uuid().required(),
+      serviceId: Joi.string().uuid().required(),
       name: Joi.string().min(2).max(16).required(),
       description: Joi.string().default('').allow('').max(64).optional(),
+      index: Joi.number().allow(null).optional(),
     });
 
-    const { name, description } = await schema.validateAsync(props);
-    await prisma.permissionModel.update({
+    const { permissionId } = permission;
+    const { name, description, index, serviceId } = await schema.validateAsync(
+      props
+    );
+
+    await Service.getServiceOrThrow(serviceId);
+    return prisma.permissionModel.update({
       where: { permissionId },
-      data: { name, description },
+      data: { serviceId, name, description, index },
+      include: { service: true },
     });
   }
 
-  public static async deletePermission(permissionId: string): Promise<void> {
+  public static async deletePermission(
+    permission: PermissionModel
+  ): Promise<void> {
+    const { permissionId } = permission;
     await prisma.permissionModel.delete({ where: { permissionId } });
   }
 }
