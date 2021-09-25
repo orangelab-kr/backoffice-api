@@ -1,4 +1,9 @@
-import { UserModel } from '.prisma/client';
+import {
+  PermissionGroupModel,
+  PermissionModel,
+  ServiceModel,
+  UserModel,
+} from '@prisma/client';
 import 'express';
 
 declare global {
@@ -6,6 +11,9 @@ declare global {
     interface Request {
       user: UserModel;
       sessionId: string;
+      permission: PermissionModel;
+      permissionGroup: PermissionGroupModel;
+      service: ServiceModel;
     }
   }
 }
