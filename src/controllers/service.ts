@@ -1,5 +1,11 @@
-import { Prisma, ServiceModel, UserModel } from '@prisma/client';
+import {
+  Prisma,
+  ServiceModel,
+  UserModel,
+  PermissionModel,
+} from '@prisma/client';
 import Joi from 'joi';
+import jwt from 'jsonwebtoken';
 import { InternalError, OPCODE, prisma } from '..';
 
 export class Service {
@@ -33,7 +39,7 @@ export class Service {
     const { select } = Service;
     const orderBy = { [orderByField]: orderBySort };
     const where: Prisma.ServiceModelWhereInput = {};
-    if (search) where.serviceId = search;
+    if (search) where.serviceId = { contains: search };
     const [total, services] = <any>await prisma.$transaction([
       prisma.serviceModel.count({ where }),
       prisma.serviceModel.findMany({
@@ -48,32 +54,47 @@ export class Service {
     return { total, services };
   }
 
-  public static async generateService(props: {
+  public static async generateAccessToken(props: {
     user: UserModel;
     service: ServiceModel;
   }): Promise<string> {
     const { user, service } = props;
-    const { userId } = user;
-    const { serviceId } = service;
+    const { userId, email: aud } = user;
+    const { serviceId, secretKey } = service;
     const permissions = await prisma.userModel
       .findFirst({ where: { userId } })
       .permissionGroup()
-      .permissions({ where: { serviceId } });
+      .permissions({ where: { serviceId, index: { not: null } } });
 
-    return 'Bearer ABC';
+    const sub = serviceId;
+    const options = { expiresIn: '1h' };
+    const iss = process.env.SERVICE_ISSUER;
+    const prs = Service.getEncodedPermission(<any>permissions);
+    return jwt.sign({ sub, iss, aud, prs }, secretKey, options);
+  }
+
+  private static getEncodedPermission(
+    permissions: PermissionModel & { index: number }[]
+  ): string {
+    const bitmask = '0'.repeat(128).split('');
+    permissions.forEach(({ index }) => (bitmask[index] = '1'));
+    return parseInt(bitmask.reverse().join(''), 2).toString(36);
   }
 
   public static async getService(
-    serviceId: string
+    serviceId: string,
+    withSecretKey = false
   ): Promise<ServiceModel | null> {
     const { select } = Service;
+    if (withSecretKey) select.secretKey = true;
     return <any>prisma.serviceModel.findFirst({ where: { serviceId }, select });
   }
 
   public static async getServiceOrThrow(
-    serviceId: string
+    serviceId: string,
+    withSecretKey = false
   ): Promise<ServiceModel> {
-    const service = await Service.getService(serviceId);
+    const service = await Service.getService(serviceId, withSecretKey);
     if (!service) {
       throw new InternalError('서비스를 찾을 수 없습니다.', OPCODE.NOT_FOUND);
     }

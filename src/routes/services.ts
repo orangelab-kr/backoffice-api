@@ -23,10 +23,10 @@ export function getServicesRouter(): Router {
 
   router.get(
     '/:serviceId/generate',
-    ServiceMiddleware(),
+    ServiceMiddleware({ withSecretKey: true }),
     Wrapper(async (req, res) => {
       const { user, service } = req;
-      const accessToken = await Service.generateService({ user, service });
+      const accessToken = await Service.generateAccessToken({ user, service });
       res.json({ opcode: OPCODE.SUCCESS, accessToken });
     })
   );

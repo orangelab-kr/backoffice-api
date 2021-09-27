@@ -157,8 +157,7 @@ export class Session {
       };
     }
   > {
-    const { findFirst } = prisma.sessionModel;
-    const session = await findFirst({
+    const session = await prisma.sessionModel.findFirst({
       where: { sessionId },
       include: {
         user: {
