@@ -8,7 +8,7 @@ export function getAuthRouter(): Router {
     '/',
     AuthMiddleware(),
     Wrapper(async (req, res) => {
-      const { user } = req;
+      const { user } = req.loggined;
       res.json({ opcode: OPCODE.SUCCESS, user });
     })
   );
@@ -17,9 +17,9 @@ export function getAuthRouter(): Router {
     '/',
     AuthMiddleware(),
     Wrapper(async (req, res) => {
-      const { body, user } = req;
+      const { body, loggined } = req;
       delete body.permissionGroupId;
-      await User.modifyUser(user, body);
+      await User.modifyUser(loggined.user, body);
       res.json({ opcode: OPCODE.SUCCESS });
     })
   );
@@ -50,7 +50,7 @@ export function getAuthRouter(): Router {
     '/',
     AuthMiddleware(),
     Wrapper(async (req, res) => {
-      await Session.revokeAllSession(req.user);
+      await Session.revokeAllSession(req.loggined.user);
       res.json({ opcode: OPCODE.SUCCESS });
     })
   );

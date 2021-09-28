@@ -12,8 +12,7 @@ export function AuthMiddleware(): Callback {
 
     const sessionId = authorization.substr(7);
     const { user } = await Session.getSession(sessionId);
-    req.sessionId = sessionId;
-    req.user = user;
+    req.loggined = { sessionId, user };
     next();
   });
 }

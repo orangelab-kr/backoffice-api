@@ -4,3 +4,4 @@ export * from './permission';
 export * from './permissionGroup';
 export * from './promise';
 export * from './service';
+export * from './user';

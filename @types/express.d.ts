@@ -9,8 +9,11 @@ import 'express';
 declare global {
   namespace Express {
     interface Request {
+      loggined: {
+        user: UserModel;
+        sessionId: string;
+      };
       user: UserModel;
-      sessionId: string;
       permission: PermissionModel;
       permissionGroup: PermissionGroupModel;
       service: ServiceModel;

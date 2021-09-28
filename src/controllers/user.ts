@@ -171,7 +171,7 @@ export class User {
     search?: number;
     orderByField?: string;
     orderBySort?: string;
-  }): Promise<{ total: number; Users: UserModel[] }> {
+  }): Promise<{ total: number; users: UserModel[] }> {
     const schema = Joi.object({
       take: Joi.number().default(10).optional(),
       skip: Joi.number().default(0).optional(),
@@ -195,7 +195,7 @@ export class User {
       ],
     };
 
-    const [total, Users] = await prisma.$transaction([
+    const [total, users] = await prisma.$transaction([
       prisma.userModel.count({ where }),
       prisma.userModel.findMany({
         take,
@@ -206,7 +206,7 @@ export class User {
       }),
     ]);
 
-    return { total, Users };
+    return { total, users };
   }
 
   public static async getUserOrThrow(userId: string): Promise<UserModel> {
