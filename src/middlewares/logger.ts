@@ -12,6 +12,7 @@ export function LoggerMiddleware(): Callback {
       req.connection.remoteAddress ||
       req.socket.remoteAddress;
 
+    if (!ipAddress) return next();
     res.on('finish', () => {
       const statusCode = res.statusCode;
       const contentLength = `${res.getHeader('content-length') || 0}B`;
@@ -23,7 +24,7 @@ export function LoggerMiddleware(): Callback {
 (SC: ${statusCode}, IP: "${ipAddress}", UA: "${userAgent}", CL: ${contentLength})`
         );
       } else {
-        logger.info(`[${httpVersion}] ${method} ${url} - ${time}`);
+        logger.info(`${httpVersion} / ${method} ${url} - ${time}`);
         logger.info(`- Status Code: ${statusCode}`);
         logger.info(`- IP Address: ${ipAddress}`);
         logger.info(`- User Agent: ${userAgent}`);
