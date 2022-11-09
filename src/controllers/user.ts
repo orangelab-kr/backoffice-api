@@ -1,3 +1,4 @@
+import { InternalError, Joi, OPCODE, PermissionGroup, prisma } from '..';
 import {
   MethodProvider,
   PermissionGroupModel,
@@ -5,8 +6,8 @@ import {
   Prisma,
   UserModel,
 } from '@prisma/client';
+
 import { hashSync } from 'bcryptjs';
-import { InternalError, Joi, OPCODE, PermissionGroup, prisma } from '..';
 
 export class User {
   public static hasPermissions(
@@ -187,13 +188,14 @@ export class User {
       await schema.validateAsync(props);
     const orderBy = { [orderByField]: orderBySort };
     const include = { permissionGroup: { include: { permissions: true } } };
-    const where: Prisma.UserModelWhereInput = {
-      OR: [
+    const where: Prisma.UserModelWhereInput = {};
+    if (search) {
+      where.OR = [
         { username: { contains: search } },
         { email: { contains: search } },
         { phone: { contains: search } },
-      ],
-    };
+      ];
+    }
 
     const [total, users] = await prisma.$transaction([
       prisma.userModel.count({ where }),

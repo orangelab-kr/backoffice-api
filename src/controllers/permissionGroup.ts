@@ -1,5 +1,5 @@
-import { PermissionGroupModel, Prisma } from '@prisma/client';
 import { InternalError, Joi, OPCODE, prisma } from '..';
+import { PermissionGroupModel, Prisma } from '@prisma/client';
 
 export class PermissionGroup {
   public static async getPermissionGroupOrThrow(
@@ -133,7 +133,7 @@ export class PermissionGroup {
       .findFirst({ where: { permissionGroupId } })
       .users();
 
-    if (users.length > 0) {
+    if (!users || users.length > 0) {
       throw new InternalError(
         `해당 권한 그룹을 사용하는 사용자가 있습니다.`,
         OPCODE.ERROR,
