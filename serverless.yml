@@ -16,7 +16,7 @@ package:
 plugins:
   - serverless-webpack
   - serverless-webpack-prisma
-  - serverless-dotenv-plugin
+  - serverless-doppler
   - serverless-offline
 
 custom:
